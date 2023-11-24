@@ -1964,6 +1964,18 @@ static int memlat_grp_probe(struct platform_device *pdev)
 	return 0;
 }
 
+static void set_gov_attributes(struct device *dev, struct memlat_mon *mon)
+{
+	int ret;
+
+	ret = of_property_read_u32(dev->of_node, "qcom,ipm_ceil", &mon->ipm_ceil);
+	if (ret < 0 || !mon->ipm_ceil) {
+		mon->ipm_ceil = 400;
+		dev_err(dev, "memlet ipm-ceil default value: %d\n", mon->ipm_ceil);
+	} else {
+		dev_err(dev, "memlet ipm-ceil value from DT: %d\n", mon->ipm_ceil);
+	}
+}
 static int memlat_mon_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -2019,7 +2031,6 @@ static int memlat_mon_probe(struct platform_device *pdev)
 
 	if (of_property_read_bool(dev->of_node, "qcom,compute-mon"))
 		mon->is_compute = true;
-
 	mon->ipm_ceil = 400;
 	mon->fe_stall_floor = 0;
 	mon->be_stall_floor = 0;
@@ -2031,6 +2042,7 @@ static int memlat_mon_probe(struct platform_device *pdev)
 	mon->spm_thres = MAX_SPM_THRES;
 	mon->spm_drop_pct = 20;
 	mon->spm_window_size = 10;
+	set_gov_attributes(dev, mon);
 
 	if (of_parse_phandle(of_node, COREDEV_TBL_PROP, 0))
 		of_node = of_parse_phandle(of_node, COREDEV_TBL_PROP, 0);

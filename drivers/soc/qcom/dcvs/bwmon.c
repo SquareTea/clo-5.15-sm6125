@@ -883,6 +883,101 @@ static void stop_monitor(struct bw_hwmon *hwmon)
 
 }
 
+static void set_gov_attributes(struct device *dev, struct hwmon_node *node)
+{
+	int ret;
+	int num_zones;
+
+	ret = of_property_read_u32(dev->of_node, "qcom,sample_ms",
+				&node->sample_ms);
+	if (ret < 0 || node->sample_ms < 0) {
+		node->sample_ms = 50;
+		dev_err(dev, "bw_hwmon sample_ms default value: %d\n", node->sample_ms);
+	} else {
+		dev_err(dev, "bw_hwmon sample_ms from DT: %d\n", node->sample_ms);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,io_percent",
+				&node->io_percent);
+	if (ret < 0 || node->io_percent < 0) {
+		node->io_percent = 20;
+		dev_err(dev, "bw_hwmon io_percent default value: %d\n", node->io_percent);
+	} else {
+		dev_err(dev, "bw_hwmon io_percent from DT: %d\n", node->io_percent);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,hist_memory",
+				&node->hist_memory);
+	if (ret < 0 || node->hist_memory < 0) {
+		node->hist_memory = 10;
+		dev_err(dev, "bw_hwmon hist_memory default value: %d\n", node->hist_memory);
+	} else {
+		dev_err(dev, "bw_hwmon hist_memory from DT: %d\n", node->hist_memory);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,hyst_length",
+				&node->hyst_length);
+	if (ret < 0 || node->hyst_length < 0) {
+		node->hyst_length = 20;
+		dev_err(dev, "bw_hwmon hyst_length default value: %d\n", node->hyst_length);
+	} else {
+		dev_err(dev, "bw_hwmon hyst_length from DT: %d\n", node->hyst_length);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,down_thres",
+			&node->down_thres);
+	if (ret < 0 || node->down_thres < 0) {
+		node->down_thres = 30;
+		dev_err(dev, "bw_hwmon down_thres default value: %d\n", node->down_thres);
+	} else {
+		dev_err(dev, "bw_hwmon down_thres from DT: %d\n", node->down_thres);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,guard_band_mbps",
+			&node->guard_band_mbps);
+	if (ret < 0 || node->guard_band_mbps < 0) {
+		node->guard_band_mbps = 200;
+		dev_err(dev, "bw_hwmon guard_band_mbps default value: %d\n", node->guard_band_mbps);
+	} else {
+		dev_err(dev, "bw_hwmon guard_band_mbps from DT: %d\n", node->guard_band_mbps);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,up_scale",
+			&node->up_scale);
+	if (ret < 0 || node->up_scale < 0) {
+		node->up_scale = 10;
+		dev_err(dev, "bw_hwmon up_scale default value: %d\n", node->up_scale);
+	} else {
+		dev_err(dev, "bw_hwmon up_scale from DT: %d\n", node->up_scale);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,idle_mbps",
+				&node->idle_mbps);
+	if (ret < 0 || node->idle_mbps < 0) {
+		node->idle_mbps = 500;
+		dev_err(dev, "bw_hwmon idle_mbps default value: %d\n", node->idle_mbps);
+	} else {
+		dev_err(dev, "bw_hwmon idle_mbps from DT: %d\n", node->idle_mbps);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,max_freq",
+				&node->max_freq);
+	if (ret < 0 || node->max_freq < 0) {
+		node->max_freq = 35;
+		dev_err(dev, "bw_hwmon max_freq default value: %d\n", node->max_freq);
+	} else {
+		dev_err(dev, "bw_hwmon max_freq from DT: %d\n", node->max_freq);
+	}
+	ret = of_property_read_u32(dev->of_node, "qcom,window_ms",
+				&node->window_ms);
+	if (ret < 0 || node->window_ms < 0) {
+		node->window_ms = 33;
+		dev_err(dev, "bw_hwmon windows_ms default value: %d\n", node->window_ms);
+	} else {
+		dev_err(dev, "bw_hwmon windows_ms from DT: %d\n", node->window_ms);
+	}
+	num_zones = of_property_count_u32_elems(dev->of_node, "qcom,mbps_zones");
+	if (num_zones < 0 || num_zones > 10 ||
+		of_property_read_u32_array(dev->of_node, "qcom,mbps_zones",
+				(u32 *)&node->mbps_zones, num_zones)) {
+		node->mbps_zones[0] = 1;
+		dev_err(dev, "bw_hwmon mbps_zone default value: %d\n", node->mbps_zones[0]);
+	} else {
+		dev_err(dev, "bw_hwmon mbps_zone from DT: %d\n", node->mbps_zones[0]);
+	}
+}
 static int configure_hwmon_node(struct bw_hwmon *hwmon)
 {
 	struct hwmon_node *node;
@@ -912,6 +1007,7 @@ static int configure_hwmon_node(struct bw_hwmon *hwmon)
 	node->mbps_zones[0] = 0;
 	node->hw = hwmon;
 
+	set_gov_attributes(hwmon->dev, node);
 	mutex_init(&node->mon_lock);
 	mutex_init(&node->update_lock);
 	spin_lock_irqsave(&list_lock, flags);
