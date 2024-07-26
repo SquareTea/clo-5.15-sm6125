@@ -1415,7 +1415,11 @@ static int tsens_probe(struct platform_device *pdev)
 		}
 	}
 
-	priv->tsens_md = thermal_minidump_register(np->name);
+	if (np && np->name) {
+		priv->tsens_md = thermal_minidump_register(np->name);
+        } else {
+                dev_err(dev, "%s: minidump register failed\n", __func__);
+        }
 	priv->tm_disable_on_suspend =
 				of_property_read_bool(np, "tm-disable-on-suspend");
 
