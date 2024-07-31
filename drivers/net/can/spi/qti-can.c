@@ -2048,8 +2048,12 @@ static int qti_can_add_filter(struct device *dev, struct can_filter_req *filter_
 	struct spi_device *spi = to_spi_device(dev);
 	struct qti_can *priv_data = NULL;
 
-	if (spi)
+	if (spi) {
 		priv_data = spi_get_drvdata(spi);
+	} else {
+		ret = -1;
+		return ret;
+	}
 
 	mutex_lock(&priv_data->spi_lock);
 	tx_buf = priv_data->tx_buf;
@@ -2108,6 +2112,7 @@ static int qti_can_restore(struct device *dev)
 		priv_data = spi_get_drvdata(spi);
 	} else {
 		ret = -1;
+		return ret;
 	}
 
 	priv_data->probe_query_resp = false;
