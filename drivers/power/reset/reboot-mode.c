@@ -51,6 +51,10 @@ static int reboot_mode_notify(struct notifier_block *this,
 
 	if (cmd) {
 		reason = kmalloc(MAX_REBOOT_REASON_LEN, GFP_KERNEL);
+		if (reason == NULL) {
+			printk("%s: kmalloc failed\n", __func__);
+			return NOTIFY_BAD;
+		}
 		strscpy(reason, (char *)cmd, MAX_REBOOT_REASON_LEN);
 	}
 
