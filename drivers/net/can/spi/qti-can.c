@@ -866,7 +866,7 @@ static int qti_can_do_spi_transaction(struct qti_can *priv_data)
 	struct spi_transfer *xfer;
 	struct spi_message *msg;
 	struct device *dev;
-	int ret;
+	int ret = 0;
 	int i = 0;
 	u8 tx_checksum = 0;
 	int checksum_tx_len = 0;
