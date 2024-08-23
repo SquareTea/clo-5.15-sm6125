@@ -2110,6 +2110,10 @@ static int qti_can_restore(struct device *dev)
 
 	if (spi) {
 		priv_data = spi_get_drvdata(spi);
+		if (priv_data == NULL) {
+			dev_err(dev, "get drvdata failed\n");
+			return -ENODEV;
+		}
 	} else {
 		ret = -1;
 		return ret;
