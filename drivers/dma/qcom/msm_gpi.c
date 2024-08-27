@@ -2610,7 +2610,8 @@ struct dma_async_tx_descriptor *gpi_prep_slave_sg(struct dma_chan *chan,
 	for_each_sg(sgl, sg, sg_len, i) {
 		GPII_VERB(gpii, gpii_chan->chid,
 			  "%d of %u len:%u\n", i, sg_len, sg->length);
-		nr_req += (sg->length / ch_ring->el_size);
+		if (sg != NULL)
+			nr_req += (sg->length / ch_ring->el_size);
 	}
 	GPII_VERB(gpii, gpii_chan->chid, "el avail:%u req:%u\n", nr, nr_req);
 
@@ -2630,25 +2631,27 @@ struct dma_async_tx_descriptor *gpi_prep_slave_sg(struct dma_chan *chan,
 
 	/* copy each tre into transfer ring */
 	for_each_sg(sgl, sg, sg_len, i) {
-		tre = sg_virt(sg);
+		if (sg != NULL) {
+			tre = sg_virt(sg);
 
-		if (sg_len == 1) {
-			tre_type =
-			MSM_GPI_TRE_TYPE(((struct msm_gpi_tre *)tre));
-			gpii_chan->lock_tre_set =
-			tre_type == MSM_GPI_TRE_LOCK ? (u32)true : (u32)false;
-		}
-		/* Check if last tre is an unlock tre */
-		if (i == sg_len - 1) {
-			tre_type =
-			MSM_GPI_TRE_TYPE(((struct msm_gpi_tre *)tre));
-			gpii->unlock_tre_set =
-			tre_type == MSM_GPI_TRE_UNLOCK ? (u32)true : (u32)false;
-		}
+			if (sg_len == 1) {
+				tre_type =
+				MSM_GPI_TRE_TYPE(((struct msm_gpi_tre *)tre));
+				gpii_chan->lock_tre_set =
+				tre_type == MSM_GPI_TRE_LOCK ? (u32)true : (u32)false;
+			}
+			/* Check if last tre is an unlock tre */
+			if (i == sg_len - 1) {
+				tre_type =
+				MSM_GPI_TRE_TYPE(((struct msm_gpi_tre *)tre));
+				gpii->unlock_tre_set =
+				tre_type == MSM_GPI_TRE_UNLOCK ? (u32)true : (u32)false;
+			}
 
-		for (j = 0; j < sg->length;
-		     j += ch_ring->el_size, tre += ch_ring->el_size)
-			gpi_queue_xfer(gpii, gpii_chan, tre, &wp);
+			for (j = 0; j < sg->length;
+			     j += ch_ring->el_size, tre += ch_ring->el_size)
+				gpi_queue_xfer(gpii, gpii_chan, tre, &wp);
+		}
 	}
 
 	/* set up the descriptor */
