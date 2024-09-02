@@ -2566,7 +2566,7 @@ static int get_args(uint32_t kernel, struct smq_invoke_ctx *ctx)
 		/* check if map  was created */
 		if (ctx->maps[i]) {
 			/* check if map still exist */
-			if (!fastrpc_mmap_find(ctx->fl, ctx->fds[i], NULL, 0, 0,
+			if (ctx->fds && !fastrpc_mmap_find(ctx->fl, ctx->fds[i], NULL, 0, 0,
 				0, 0, &mmap)) {
 				if (mmap) {
 					pages[i].addr = mmap->phys;
