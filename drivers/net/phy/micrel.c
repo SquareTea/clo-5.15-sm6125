@@ -1683,7 +1683,7 @@ static int ksz886x_cable_test_get_status(struct phy_device *phydev,
 {
 	unsigned long pair_mask = 0x3;
 	int retries = 20;
-	int pair, ret;
+	int pair = 0, ret = 0;
 
 	*finished = false;
 

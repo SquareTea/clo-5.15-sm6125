@@ -726,7 +726,7 @@ static const struct file_operations fops = {
 static int recv_single(struct virt_msg_hdr *rsp, unsigned int len)
 {
 	struct vfastrpc_apps *me = &gfa;
-	struct virt_fastrpc_msg *msg;
+	struct virt_fastrpc_msg *msg = NULL;
 
 	if (len != rsp->len) {
 		dev_err(me->dev, "msg %u len mismatch,expected %u but %d found\n",
@@ -734,24 +734,26 @@ static int recv_single(struct virt_msg_hdr *rsp, unsigned int len)
 		return -EINVAL;
 	}
 	spin_lock(&me->msglock);
+
 	msg = me->msgtable[rsp->msgid];
-	spin_unlock(&me->msglock);
 
 	if (!msg) {
 		dev_err(me->dev, "msg %u already free in table[%u]\n",
 				rsp->cmd, rsp->msgid);
+		spin_unlock(&me->msglock);
 		return -EINVAL;
 	}
 	msg->rxbuf = (void *)rsp;
+
+	if (msg->ctx)
+		trace_recv_single_end(msg->ctx);
 
 	if (msg->ctx && msg->ctx->asyncjob.isasyncjob)
 		vfastrpc_queue_completed_async_job(msg->ctx);
 	else
 		complete(&msg->work);
 
-	if (msg->ctx)
-		trace_recv_single_end(msg->ctx);
-
+	spin_unlock(&me->msglock);
 	return 0;
 }
 

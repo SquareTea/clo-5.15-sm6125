@@ -348,6 +348,8 @@ static int xhci_plat_probe(struct platform_device *pdev)
 			goto disable_usb_phy;
 	}
 
+	xhci->quirks |= XHCI_SKIP_PHY_INIT;
+
 	if ((xhci->quirks & XHCI_SKIP_PHY_INIT) || (priv && (priv->quirks & XHCI_SKIP_PHY_INIT)))
 		hcd->skip_phy_initialization = 1;
 

@@ -201,7 +201,7 @@ struct usb_bam_ctx_type {
 	spinlock_t		usb_bam_lock;
 };
 
-static struct usb_bam_ctx_type msm_usb_bam[MAX_BAMS];
+static struct usb_bam_ctx_type msm_usb_bam[MAX_BAMS + 1];
 /* USB bam type used as a peer of the qdss in bam2bam mode */
 static enum usb_ctrl qdss_usb_bam_type;
 
