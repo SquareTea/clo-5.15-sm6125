@@ -41,23 +41,4 @@ static void disable_cdev_stats(void *unused,
 	*disable = 1;
 }
 
-/* Generic thermal vendor hooks initialization API */
-static inline __maybe_unused void thermal_vendor_hooks_init(void)
-{
-	int ret;
-
-	ret = register_trace_android_vh_disable_thermal_cooling_stats(
-			disable_cdev_stats, NULL);
-	if (ret) {
-		pr_err("Failed to register disable thermal cdev stats hooks\n");
-		return;
-	}
-}
-
-static inline __maybe_unused void thermal_vendor_hooks_exit(void)
-{
-	unregister_trace_android_vh_disable_thermal_cooling_stats(
-			disable_cdev_stats, NULL);
-}
-
 #endif  // __QTI_THERMAL_ZONE_INTERNAL_H

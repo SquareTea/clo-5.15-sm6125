@@ -5351,13 +5351,6 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	pm_runtime_mark_last_busy(&pdev->dev);
 	pm_runtime_put_autosuspend(&pdev->dev);
 
-	if (msm_host->mmc->card && mmc_card_sdio(msm_host->mmc->card))
-		register_trace_android_vh_mmc_sdio_pm_flag_set(sdhci_msm_set_sdio_pm_flag, NULL);
-
-	if (host->mmc->caps & MMC_CAP_NONREMOVABLE) {
-		register_trace_android_rvh_mmc_cache_card_properties(mmc_cache_card, NULL);
-		register_trace_android_rvh_partial_init(partial_init, NULL);
-	}
 	return 0;
 
 pm_runtime_disable:

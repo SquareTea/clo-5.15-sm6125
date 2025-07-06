@@ -170,13 +170,8 @@ static struct notifier_block gic_notif_block = {
 
 static int __init msm_show_resume_irq_init(void)
 {
-	register_trace_prio_android_vh_cpuidle_psci_enter(gic_s2idle_enter, NULL, INT_MAX);
-	register_trace_prio_android_vh_cpuidle_psci_exit(gic_s2idle_exit, NULL, INT_MAX);
-
-	register_trace_android_vh_gic_resume(msm_show_resume_irqs, NULL);
-
 	register_pm_notifier(&gic_notif_block);
-	return register_trace_android_vh_gic_suspend(gic_suspend_ds, NULL);
+	return;
 }
 
 #if IS_MODULE(CONFIG_QCOM_SHOW_RESUME_IRQ)

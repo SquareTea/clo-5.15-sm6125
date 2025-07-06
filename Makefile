@@ -967,9 +967,9 @@ KBUILD_AFLAGS	+= $(CC_FLAGS_USING)
 endif
 
 # We trigger additional mismatches with less inlining
-ifdef CONFIG_DEBUG_SECTION_MISMATCH
-KBUILD_CFLAGS += -fno-inline-functions-called-once
-endif
+#ifdef CONFIG_DEBUG_SECTION_MISMATCH
+#KBUILD_CFLAGS += -fno-inline-functions-called-once
+#endif
 
 ifdef CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
 KBUILD_CFLAGS_KERNEL += -ffunction-sections -fdata-sections

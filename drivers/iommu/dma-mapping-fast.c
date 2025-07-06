@@ -1100,7 +1100,6 @@ EXPORT_SYMBOL(fast_smmu_setup_dma_ops);
 
 int __init dma_mapping_fast_init(void)
 {
-	return register_trace_android_rvh_iommu_setup_dma_ops(
-			__fast_smmu_setup_dma_ops, NULL);
+	return 0;
 }
 

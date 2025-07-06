@@ -122,7 +122,6 @@ static int __init msm_rq_stats_init(void)
 	rq_info.def_timer_last_jiffy = 0;
 	ret = init_rq_attribs();
 
-	register_trace_android_vh_jiffies_update(wakeup_user, NULL);
 
 	return ret;
 }

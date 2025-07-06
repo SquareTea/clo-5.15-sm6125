@@ -1048,87 +1048,6 @@ static void uaudio_dev_cleanup(struct uaudio_dev *dev)
 	dev->udev = NULL;
 }
 
-
-static void uaudio_connect(void *unused, struct usb_interface *intf,
-		struct snd_usb_audio *chip)
-{
-	uaudio_dbg("intf: %s: %p chip: %p card_number:%d\n",
-		dev_name(&intf->dev), intf, chip, chip->card->number);
-
-	if (chip->card->number >= SNDRV_CARDS) {
-		uaudio_err("Invalid card number\n");
-		return;
-	}
-
-	uadev[chip->card->number].chip = chip;
-}
-
-static void uaudio_disconnect(void *unused, struct usb_interface *intf)
-{
-	int ret;
-	struct snd_usb_audio *chip = usb_get_intfdata(intf);
-	struct uaudio_dev *dev;
-	int card_num;
-	struct uaudio_qmi_svc *svc = uaudio_svc;
-	struct qmi_uaudio_stream_ind_msg_v01 disconnect_ind = {0};
-
-	if (!chip) {
-		uaudio_err("chip is NULL\n");
-		return;
-	}
-
-	card_num = chip->card->number;
-	uaudio_dbg("intf: %s: %p chip: %p card: %d\n", dev_name(&intf->dev),
-			intf, chip, card_num);
-
-	if (card_num >= SNDRV_CARDS) {
-		uaudio_err("invalid card number\n");
-		return;
-	}
-
-	dev = &uadev[card_num];
-
-	/* clean up */
-	if (!dev->udev) {
-		uaudio_dbg("no clean up required\n");
-		goto done;
-	}
-
-	if (atomic_read(&dev->in_use)) {
-		uaudio_dbg("sending qmi indication disconnect\n");
-		uaudio_dbg("sq->sq_family:%x sq->sq_node:%x sq->sq_port:%x\n",
-				svc->client_sq.sq_family,
-				svc->client_sq.sq_node, svc->client_sq.sq_port);
-		disconnect_ind.dev_event = USB_AUDIO_DEV_DISCONNECT_V01;
-		disconnect_ind.slot_id = dev->udev->slot_id;
-		disconnect_ind.controller_num = dev->usb_core_id;
-		disconnect_ind.controller_num_valid = 1;
-		ret = qmi_send_indication(svc->uaudio_svc_hdl, &svc->client_sq,
-				QMI_UAUDIO_STREAM_IND_V01,
-				QMI_UAUDIO_STREAM_IND_MSG_V01_MAX_MSG_LEN,
-				qmi_uaudio_stream_ind_msg_v01_ei,
-				&disconnect_ind);
-		if (ret < 0)
-			uaudio_err("qmi send failed with err: %d\n", ret);
-
-		ret = wait_event_interruptible_timeout(dev->disconnect_wq,
-				!atomic_read(&dev->in_use),
-				msecs_to_jiffies(DEV_RELEASE_WAIT_TIMEOUT));
-		if (!ret) {
-			uaudio_err("timeout while waiting for dev_release\n");
-			atomic_set(&dev->in_use, 0);
-		} else if (ret < 0) {
-			uaudio_err("failed with ret %d\n", ret);
-			atomic_set(&dev->in_use, 0);
-		}
-
-	}
-
-	uaudio_dev_cleanup(dev);
-done:
-	uadev[card_num].chip = NULL;
-}
-
 static void uaudio_dev_release(struct kref *kref)
 {
 	struct uaudio_dev *dev = container_of(kref, struct uaudio_dev, kref);
@@ -1868,19 +1787,8 @@ static int uaudio_qmi_plat_probe(struct platform_device *pdev)
 	uaudio_qdev->xfer_buf_iova_size =
 		IOVA_XFER_BUF_MAX - IOVA_XFER_BUF_BASE;
 
-	ret = register_trace_android_vh_audio_usb_offload_connect(uaudio_connect, NULL);
-	if (ret) {
-		dev_err(&pdev->dev, "failed to register connect callback ret = %d\n", ret);
-		goto detach_device;
-	}
-
-	ret = register_trace_android_rvh_audio_usb_offload_disconnect(uaudio_disconnect, NULL);
-		dev_err(&pdev->dev, "failed to register disconnect callback ret = %d\n", ret);
-
 	return 0;
 
-detach_device:
-	iommu_detach_device(uaudio_qdev->domain, &pdev->dev);
 free_domain:
 	iommu_domain_free(uaudio_qdev->domain);
 	return ret;
@@ -1888,11 +1796,9 @@ free_domain:
 
 static int uaudio_qmi_plat_remove(struct platform_device *pdev)
 {
-	unregister_trace_android_vh_audio_usb_offload_connect(uaudio_connect, NULL);
 	iommu_detach_device(uaudio_qdev->domain, &pdev->dev);
 	iommu_domain_free(uaudio_qdev->domain);
 	uaudio_qdev->domain = NULL;
-
 	return 0;
 }
 
